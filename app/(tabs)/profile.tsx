@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/core/supabase/client.supabase';
 import { useRouter } from 'expo-router';
@@ -8,33 +8,34 @@ export default function Profile() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [country, setCountry] = useState('');
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
     getProfile();
   }, []);
 
   const getProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (!user) return;
+      if (userError) throw userError;
+      if (!user) throw new Error("No hay usuario autenticado");
 
-    setEmail(user.email || '');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('name, country')
-      .eq('id', user.id)
-      .single();
+      if (error) throw error;
 
-    if (data) {
-      setName(data.name || '');
-      setCountry(data.country || '');
+      setProfile(data);
+
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleLogout = async () => {
@@ -55,20 +56,20 @@ export default function Profile() {
 
       <View className="bg-white p-6 rounded-3xl shadow-lg w-full">
 
-        <Text className="text-2xl font-bold mb-4 text-center">
-          👤 Bienvenido a tu perfil
+        <Text className="text-2xl font-bold mb-6 text-center">
+          👤 Tu Perfil
         </Text>
 
         <Text className="text-lg mb-2">
-          📧 Email: {email}
+          🧑 Nombre: {profile?.first_name}
         </Text>
 
         <Text className="text-lg mb-2">
-          🧑 Nombre: {name || 'No registrado'}
+          🌎 País: {profile?.country}
         </Text>
 
         <Text className="text-lg mb-6">
-          🌎 País: {country || 'No registrado'}
+          🏠 Dirección: {profile?.address}
         </Text>
 
         <TouchableOpacity
