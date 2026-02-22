@@ -1,14 +1,17 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import Burger3D from '@/Components/Burger3D';
 import "@/global.css";
 
 type Ingredient = 'meat' | 'cheese';
 
 export default function BurgerBuild() {
+  const router = useRouter();
+
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [topBun, setTopBun] = useState<boolean>(false);
+  const [paid, setPaid] = useState<boolean>(false);
 
   const meatCount = ingredients.filter(i => i === 'meat').length;
   const cheeseCount = ingredients.filter(i => i === 'cheese').length;
@@ -24,14 +27,20 @@ export default function BurgerBuild() {
     setIngredients([...ingredients, item]);
   };
 
+  const handlePay = () => {
+    setPaid(true);
+    setTimeout(() => {
+      router.replace('/feed');
+    }, 800);
+  };
+
   return (
     <View className="flex-1 bg-yellow-400 px-4 pt-11">
 
-      {/* HEADER CON FLECHA */}
+      {/* HEADER */}
       <View className="flex-row justify-between items-center mb-5 mt-2">
         <Link href="/feed" asChild>
-          <TouchableOpacity className="mr-3">      
-          </TouchableOpacity>
+          <TouchableOpacity className="mr-3"></TouchableOpacity>
         </Link>
 
         <Text className="text-2xl font-bold">
@@ -43,14 +52,12 @@ export default function BurgerBuild() {
       <View className="flex-1 bg-white rounded-3xl p-5 shadow-lg">
 
         {/* 3D */}
-      
-      <View className="flex-1 pt-28 pb-2 justify-end">
+        <View className="flex-1 pt-28 pb-2 justify-end">
           <Burger3D
             ingredients={['bottom-bun', ...ingredients]}
             topBun={topBun}
           />
-      </View>
-
+        </View>
 
         {/* CONTROLES */}
         <View>
@@ -102,6 +109,18 @@ export default function BurgerBuild() {
                 {topBun ? '🍔 Lista' : '🎨 Finalizar'}
               </Text>
             </TouchableOpacity>
+
+            {/* BOTÓN PAGAR (solo aparece cuando finaliza) */}
+            {topBun && (
+              <TouchableOpacity
+                onPress={handlePay}
+                className="px-4 py-2 rounded-full bg-green-600"
+              >
+                <Text className="font-semibold text-white">
+                  {paid ? '✅ Pagado' : '💳 Pagar'}
+                </Text>
+              </TouchableOpacity>
+            )}
 
           </View>
         </View>
